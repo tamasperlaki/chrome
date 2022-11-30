@@ -303,6 +303,37 @@ export class BrowserlessServer {
         });
         app.use(metricsMiddleware);
         client.collectDefaultMetrics();
+
+        const browserlessConfig = this.config;
+        const jobsQueue = this.queue;
+        new client.Gauge({
+          name: 'browserless_chrome_running_browser_instances',
+          help: 'Number of browser instances running simultaneously',
+          collect() {
+            this.set(getBrowsersRunning());
+          },
+        });
+        new client.Gauge({
+          name: 'browserless_chrome_jobs',
+          help: 'Number of total jobs pending or being processed',
+          collect() {
+            this.set(jobsQueue.length);
+          },
+        });
+        new client.Gauge({
+          name: 'browserless_chrome_max_concurrent',
+          help: 'Maximum number of running jobs that can be processed at the same time',
+          collect() {
+            this.set(jobsQueue.concurrencySize);
+          },
+        });
+        new client.Gauge({
+          name: 'browserless_chrome_max_total_jobs',
+          help: 'Maximum number of jobs that can be in the system, including pending and running',
+          collect() {
+            this.set(browserlessConfig.maxQueueLength);
+          },
+        });
       }
 
       const routes = getRoutes({
